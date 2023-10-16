@@ -2,6 +2,14 @@ import praw
 import csv
 from googletrans import Translator
 
+# Definir una función para calcular el promedio de una columna
+def calculate_average(column_name, results):
+    column_values = [getattr(submission, column_name) for submission in results if getattr(submission, column_name) != 0]
+    if column_values:
+        return sum(column_values) / len(column_values)
+    else:
+        return 0
+
 # Configura las credenciales OAuth2
 client_id = "cJch1PistFynpir_8PhcpQ"
 client_secret = "9Cze3ghgboo6tIHc8LQ_DVquhplTxw"
@@ -52,6 +60,11 @@ with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
     for submission in all_results:
         # Traduce el título al español
         titulo_es = translator.translate(submission.title, src='auto', dest='es').text
+        # Reemplaza los valores 0 en las columnas "Puntuación" y "Cantidad de Comentarios" por el promedio
+        if submission.score == 0:
+            submission.score = calculate_average("score", all_results)
+        if submission.num_comments == 0:
+            submission.num_comments = calculate_average("num_comments", all_results)
         # Escribe los datos en el CSV en el orden especificado
         row = [submission.id, submission.author, submission.url, submission.score, submission.num_comments, submission.created_utc, submission.title, titulo_es]
         writer.writerow(row)
